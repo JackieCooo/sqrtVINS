@@ -381,9 +381,7 @@ void ROS2Visualizer::visualize_odometry(double timestamp) {
   // Hamilton rotation
   auto odom_pose = std::make_shared<ov_type::PoseJPL>();
   odom_pose->set_value(state_plus.block(0, 0, 7, 1));
-  geometry_msgs::msg::TransformStamped trans =
-      ROSVisualizerHelper::get_stamped_transform_from_pose(_node, odom_pose,
-                                                           false);
+  auto trans = ROSVisualizerHelper::get_stamped_transform_from_pose(_node, odom_pose, false);
   trans.header.stamp = _node->now();
   trans.header.frame_id = "global";
   trans.child_frame_id = "imu";
@@ -393,9 +391,7 @@ void ROS2Visualizer::visualize_odometry(double timestamp) {
 
   // Loop through each camera calibration and publish it
   for (const auto &calib : state->calib_IMUtoCAM) {
-    geometry_msgs::msg::TransformStamped trans_calib =
-        ROSVisualizerHelper::get_stamped_transform_from_pose(
-            _node, calib.second, true);
+    auto trans_calib = ROSVisualizerHelper::get_stamped_transform_from_pose(_node, calib.second, true);
     trans_calib.header.stamp = _node->now();
     trans_calib.header.frame_id = "imu";
     trans_calib.child_frame_id = "cam" + std::to_string(calib.first);
