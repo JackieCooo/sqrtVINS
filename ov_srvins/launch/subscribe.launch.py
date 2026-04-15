@@ -1,11 +1,12 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction, IncludeLaunchDescription, ExecuteProcess, TimerAction
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, FindExecutable
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory, get_package_prefix
+from launch_ros.substitutions import FindPackageShare
+from ament_index_python.packages import get_package_share_directory
 import os
-import sys
+
 
 launch_args = [
     DeclareLaunchArgument(
@@ -15,7 +16,7 @@ launch_args = [
         name="ov_enable", default_value="true", description="enable SRVINS node"
     ),
     DeclareLaunchArgument(
-        name="rviz_enable", default_value="false", description="enable rviz node"
+        name="foxglove_enable", default_value="false", description="enable Foxglove node"
     ),
     DeclareLaunchArgument(
         name="config",
@@ -39,13 +40,22 @@ launch_args = [
     ),
     DeclareLaunchArgument(
         name="max_cameras",
-        default_value="1",
+        default_value="2",
         description="how many cameras we have 1 = mono, 2 = stereo, >2 = binocular (all mono tracking)",
     ),
     DeclareLaunchArgument(
         name="save_total_state",
         default_value="false",
         description="record the total state with calibration and features to a txt file",
+    ),
+    DeclareLaunchArgument(
+        name="use_bag", default_value="false", description="enable ROS bag playing"
+    ),
+    DeclareLaunchArgument(
+        name="bag", default_value="", description="ROS bag to play"
+    ),
+    DeclareLaunchArgument(
+        name="skip_sec", default_value="0", description="Skip N seconds when playing ROS bag file"
     ),
 ]
 
@@ -80,7 +90,15 @@ def launch_setup(context):
                     )
                 )
             ]
-    node1 = Node(
+
+    # Foxglove node
+    foxglove_node = IncludeLaunchDescription(
+        PathJoinSubstitution([FindPackageShare('ov_srvins'), 'launch', 'foxglove_bridge.launch.py']),
+        condition=IfCondition(LaunchConfiguration('foxglove_enable'))
+    )
+
+    # Master node
+    master_node = Node(
         package="ov_srvins",
         executable="run_subscribe_msckf",
         condition=IfCondition(LaunchConfiguration("ov_enable")),
@@ -95,22 +113,24 @@ def launch_setup(context):
         ],
     )
 
-    node2 = Node(
-        package="rviz2",
-        executable="rviz2",
-        condition=IfCondition(LaunchConfiguration("rviz_enable")),
-        arguments=[
-            "-d"
-            + os.path.join(
-                get_package_share_directory("ov_srvins"), "launch", "display_ros2.rviz"
-            ),
-            "--ros-args",
-            "--log-level",
-            "warn",
+    # Play ROS bag (wait a few seconds for SLAM node to fully initialized)
+    bag_node = TimerAction(
+        period=3.0,
+        actions=[
+            ExecuteProcess(
+                cmd=[[
+                    FindExecutable(name='ros2'),
+                    ' bag play --disable-keyboard-controls --start-offset ',
+                    LaunchConfiguration('skip_sec'), ' ',
+                    LaunchConfiguration('bag')
+                ]],
+                shell=True
+            )
         ],
+        condition=IfCondition(LaunchConfiguration("use_bag"))
     )
 
-    return [node1, node2]
+    return [foxglove_node, master_node, bag_node]
 
 
 def generate_launch_description():
