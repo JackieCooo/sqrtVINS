@@ -1,0 +1,25 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/cpp
+{
+	"name": "sqrtVINS Dev",
+    "image": "ros:slam-x86",
+    "runArgs": [
+        "--rm"
+    ],
+    "forwardPorts": [8765],
+    "privileged": true,
+	"customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cpp-devtools",
+                "ms-vscode.cpptools-themes",
+                "ms-vscode.cmake-tools",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.debugpy",
+                "ms-python.vscode-python-envs"
+            ]
+        }
+    }
+}
