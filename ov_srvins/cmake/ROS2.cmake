@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 
 # Find ROS build system
 find_package(ament_cmake REQUIRED)
@@ -57,47 +57,49 @@ list(APPEND ament_libraries
 
 list(APPEND LIBRARY_SOURCES
     src/dummy.cpp
-        src/sim/Simulator.cpp
-        src/state/State.cpp
-        src/state/StateHelper.cpp
-        src/state/Propagator.cpp
-        src/core/VioManager.cpp
-        src/core/VioManagerOptions.cpp
-        src/update/UpdaterHelper.cpp
-        src/update/UpdaterMSCKF.cpp
-        src/update/UpdaterSLAM.cpp
-        src/update/UpdaterZeroVelocity.cpp
+    src/sim/Simulator.cpp
+    src/state/State.cpp
+    src/state/StateHelper.cpp
+    src/state/Propagator.cpp
+    src/core/VioManager.cpp
+    src/core/VioManagerOptions.cpp
+    src/update/UpdaterHelper.cpp
+    src/update/UpdaterMSCKF.cpp
+    src/update/UpdaterSLAM.cpp
+    src/update/UpdaterZeroVelocity.cpp
 
-        src/initializer/InertialInitializer.cpp
-        src/initializer/InertialInitializerOptions.cpp
-        src/initializer/dynamic/Solver.cpp
-        src/initializer/dynamic/OpengvHelper.cpp
-        src/initializer/dynamic/DynamicInitializer.cpp
-        src/initializer/static/StaticInitializer.cpp
-        
-        src/utils/Timer.cpp
-        src/utils/Helper.cpp
-        src/utils/NoiseManager.cpp
-        src/utils/CameraPoseBuffer.cpp
-        src/utils/EigenMatrixBuffer.cpp
+    src/initializer/InertialInitializer.cpp
+    src/initializer/InertialInitializerOptions.cpp
+    src/initializer/dynamic/Solver.cpp
+    src/initializer/dynamic/OpengvHelper.cpp
+    src/initializer/dynamic/DynamicInitializer.cpp
+    src/initializer/static/StaticInitializer.cpp
+    
+    src/utils/Timer.cpp
+    src/utils/Helper.cpp
+    src/utils/NoiseManager.cpp
+    src/utils/CameraPoseBuffer.cpp
+    src/utils/EigenMatrixBuffer.cpp
 )
-list(APPEND LIBRARY_SOURCES src/ros/ROS2Visualizer.cpp src/ros/ROSVisualizerHelper.cpp)
-file(GLOB_RECURSE LIBRARY_HEADERS "src/*.h")
-add_library(ov_srvins_lib SHARED ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
-ament_target_dependencies(ov_srvins_lib ${ament_libraries})
-target_link_libraries(ov_srvins_lib ${thirdparty_libraries})
-target_include_directories(ov_srvins_lib PUBLIC src/)
-install(TARGETS ov_srvins_lib
+list(APPEND LIBRARY_SOURCES
+    src/ros/ROS2Visualizer.cpp
+    src/ros/ROSVisualizerHelper.cpp
+)
+add_library(${PROJECT_NAME} SHARED ${LIBRARY_SOURCES})
+ament_target_dependencies(${PROJECT_NAME} PUBLIC ${ament_libraries})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${thirdparty_libraries})
+target_include_directories(${PROJECT_NAME} PUBLIC src/)
+install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
         PUBLIC_HEADER DESTINATION include
 )
 install(DIRECTORY src/
-        DESTINATION include
+        DESTINATION include/${PROJECT_NAME}
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
 ament_export_include_directories(include)
-ament_export_libraries(ov_srvins_lib)
+ament_export_libraries(${PROJECT_NAME})
 
 ##################################################
 # Make binary files!
@@ -105,22 +107,22 @@ ament_export_libraries(ov_srvins_lib)
 
 add_executable(run_subscribe_msckf src/run_subscribe_msckf.cpp)
 ament_target_dependencies(run_subscribe_msckf ${ament_libraries})
-target_link_libraries(run_subscribe_msckf ov_srvins_lib ${thirdparty_libraries})
+target_link_libraries(run_subscribe_msckf ${PROJECT_NAME} ${thirdparty_libraries})
 install(TARGETS run_subscribe_msckf DESTINATION lib/${PROJECT_NAME})
 
 add_executable(run_simulation src/run_simulation.cpp)
 ament_target_dependencies(run_simulation ${ament_libraries})
-target_link_libraries(run_simulation ov_srvins_lib ${thirdparty_libraries})
+target_link_libraries(run_simulation ${PROJECT_NAME} ${thirdparty_libraries})
 install(TARGETS run_simulation DESTINATION lib/${PROJECT_NAME})
 
 add_executable(test_sim_meas src/test_sim_meas.cpp)
 ament_target_dependencies(test_sim_meas ${ament_libraries})
-target_link_libraries(test_sim_meas ov_srvins_lib ${thirdparty_libraries})
+target_link_libraries(test_sim_meas ${PROJECT_NAME} ${thirdparty_libraries})
 install(TARGETS test_sim_meas DESTINATION lib/${PROJECT_NAME})
 
 add_executable(test_sim_repeat src/test_sim_repeat.cpp)
 ament_target_dependencies(test_sim_repeat ${ament_libraries})
-target_link_libraries(test_sim_repeat ov_srvins_lib ${thirdparty_libraries})
+target_link_libraries(test_sim_repeat ${PROJECT_NAME} ${thirdparty_libraries})
 install(TARGETS test_sim_repeat DESTINATION lib/${PROJECT_NAME})
 
 # Install launch and config directories

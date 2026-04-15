@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 
 # Find ros dependencies
 find_package(ament_cmake REQUIRED)
@@ -16,6 +16,8 @@ option(USE_FLOAT "Use float version when built" ON)
 if (USE_FLOAT)
     add_definitions(-DUSE_FLOAT=1)
 endif ()
+
+option(BUILD_TESTS "Enable test demo build" OFF)
 
 # Include our header files
 include_directories(
@@ -50,42 +52,43 @@ list(APPEND LIBRARY_SOURCES
         src/feat/FeatureInitializer.cpp
         src/utils/print.cpp
 )
-file(GLOB_RECURSE LIBRARY_HEADERS "src/*.h")
-add_library(ov_core_lib SHARED ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
-ament_target_dependencies(ov_core_lib rclcpp cv_bridge)
-target_link_libraries(ov_core_lib ${thirdparty_libraries})
-target_include_directories(ov_core_lib PUBLIC src/)
-install(TARGETS ov_core_lib
+add_library(${PROJECT_NAME} SHARED ${LIBRARY_SOURCES})
+ament_target_dependencies(${PROJECT_NAME} PUBLIC rclcpp cv_bridge)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${thirdparty_libraries})
+target_include_directories(${PROJECT_NAME} PUBLIC src/)
+install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
-        PUBLIC_HEADER DESTINATION include
+        PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
 )
 install(DIRECTORY src/
-        DESTINATION include
+        DESTINATION include/${PROJECT_NAME}
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
-ament_export_include_directories(include)
-ament_export_libraries(ov_core_lib)
+ament_export_include_directories(include/${PROJECT_NAME})
+ament_export_libraries(${PROJECT_NAME})
 
 ##################################################
 # Make binary files!
 ##################################################
 
-# TODO: UPGRADE THIS TO ROS2 AS ANOTHER FILE!!
-#if (catkin_FOUND AND ENABLE_ROS)
-#    add_executable(test_tracking src/test_tracking.cpp)
-#    target_link_libraries(test_tracking ov_core_lib ${thirdparty_libraries})
-#endif ()
+if(BUILD_TESTS)
+    # TODO: UPGRADE THIS TO ROS2 AS ANOTHER FILE!!
+    #if (catkin_FOUND AND ENABLE_ROS)
+    #    add_executable(test_tracking src/test_tracking.cpp)
+    #    target_link_libraries(test_tracking ${PROJECT_NAME} ${thirdparty_libraries})
+    #endif ()
 
-add_executable(test_webcam src/test_webcam.cpp)
-ament_target_dependencies(test_webcam rclcpp cv_bridge)
-target_link_libraries(test_webcam ov_core_lib ${thirdparty_libraries})
-install(TARGETS test_webcam DESTINATION lib/${PROJECT_NAME})
+    add_executable(test_webcam src/test_webcam.cpp)
+    ament_target_dependencies(test_webcam rclcpp cv_bridge)
+    target_link_libraries(test_webcam ${PROJECT_NAME} ${thirdparty_libraries})
+    install(TARGETS test_webcam DESTINATION lib/${PROJECT_NAME})
 
-add_executable(test_profile src/test_profile.cpp)
-ament_target_dependencies(test_profile rclcpp cv_bridge)
-target_link_libraries(test_profile ov_core_lib ${thirdparty_libraries})
-install(TARGETS test_profile DESTINATION lib/${PROJECT_NAME})
+    add_executable(test_profile src/test_profile.cpp)
+    ament_target_dependencies(test_profile rclcpp cv_bridge)
+    target_link_libraries(test_profile ${PROJECT_NAME} ${thirdparty_libraries})
+    install(TARGETS test_profile DESTINATION lib/${PROJECT_NAME})
+endif(BUILD_TESTS)
 
 # finally define this as the package
 ament_package()
