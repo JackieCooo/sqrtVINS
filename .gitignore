@@ -9,3 +9,7 @@ doxgen_generated
 doc
 .vscode
 __pycache__
+log
+install
+datasets
+output
